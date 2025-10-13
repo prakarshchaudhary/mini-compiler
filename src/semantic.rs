@@ -1,0 +1,1 @@
+// type checks and variable scoping 
