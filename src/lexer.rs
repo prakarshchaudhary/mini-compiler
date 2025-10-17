@@ -1,86 +1,142 @@
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token {
-    Keyword(String),
-    Identifier(String),
-    Number(i32),
-    Operator(String),
-    Punctuation(char),
+pub enum TokenKind {
+    // Keywords
+    Let,
+    If,
+    Else,
+    While,
+    Fn,
+    Return,
+
+    // Identifiers and literals
+    Ident,
+    Number,
+
+    // Operators
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Eq,
+
+    // Symbols
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
+    Comma,
+    Semicolon,
+
+    // End of input
+    EOF,
 }
+
+#[derive(Debug, Clone)]
+pub struct Token {
+    pub kind: TokenKind,
+    pub value: String,
+}
+
 pub struct Lexer {
-    source: String,
+    source: Vec<char>,
     pos: usize,
 }
 
 impl Lexer {
     pub fn new(source: String) -> Self {
-        Lexer { source, pos: 0 }
+        Lexer {
+            source: source.chars().collect(),
+            pos: 0,
+        }
+    }
+
+    fn peek(&self) -> Option<char> {
+        self.source.get(self.pos).cloned()
+    }
+
+    fn next(&mut self) -> Option<char> {
+        let ch = self.source.get(self.pos).cloned();
+        self.pos += 1;
+        ch
+    }
+
+    fn skip_whitespace(&mut self) {
+        while let Some(ch) = self.peek() {
+            if ch.is_whitespace() {
+                self.pos += 1;
+            } else {
+                break;
+            }
+        }
     }
 
     pub fn tokenize(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
 
-        while self.pos < self.source.len() {
-            let current_char = self.source.chars().nth(self.pos).unwrap();
+        while let Some(ch) = self.peek() {
+            self.skip_whitespace();
 
-            if current_char.is_whitespace() {
-                self.pos += 1;
-                continue;
-            }
-
-            // Numbers
-            if current_char.is_digit(10) {
-                let mut num_str = String::new();
-                while self.pos < self.source.len() && self.source.chars().nth(self.pos).unwrap().is_digit(10) {
-                    num_str.push(self.source.chars().nth(self.pos).unwrap());
-                    self.pos += 1;
-                }
-                tokens.push(Token::Number(num_str.parse().unwrap()));
-                continue;
-            }
-
-            // Identifiers / Keywords
-            if current_char.is_alphabetic() {
-                let mut ident = String::new();
-                while self.pos < self.source.len() && self.source.chars().nth(self.pos).unwrap().is_alphanumeric() {
-                    ident.push(self.source.chars().nth(self.pos).unwrap());
-                    self.pos += 1;
-                }
-
-                match ident.as_str() {
-                    "let" | "if" | "else" | "while" | "fn" | "return" => tokens.push(Token::Keyword(ident)),
-                    _ => tokens.push(Token::Identifier(ident)),
-                }
-                continue;
-            }
-
-            // Operators and punctuation
-            match current_char {
-                '+' | '-' | '*' | '/' | '=' | '<' | '>' | '!' => {
-                    let mut op = current_char.to_string();
-                    self.pos += 1;
-                    // Handle double char operators like '==', '>=', '!='
-                    if self.pos < self.source.len() {
-                        let next_char = self.source.chars().nth(self.pos).unwrap();
-                        if (current_char == '=' && next_char == '=') ||
-                            (current_char == '!' && next_char == '=') ||
-                            (current_char == '<' && next_char == '=') ||
-                            (current_char == '>' && next_char == '=') {
-                            op.push(next_char);
-                            self.pos += 1;
-                        }
-                    }
-                    tokens.push(Token::Operator(op));
-                }
-                '(' | ')' | '{' | '}' | ';' => {
-                    tokens.push(Token::Punctuation(current_char));
-                    self.pos += 1;
-                }
-                _ => {
-                    panic!("Unknown character: {}", current_char);
+            if ch.is_alphabetic() || ch == '_' {
+                tokens.push(self.lex_ident_or_keyword());
+            } else if ch.is_ascii_digit() {
+                tokens.push(self.lex_number());
+            } else {
+                match self.next().unwrap() {
+                    '+' => tokens.push(Token { kind: TokenKind::Plus, value: "+".to_string() }),
+                    '-' => tokens.push(Token { kind: TokenKind::Minus, value: "-".to_string() }),
+                    '*' => tokens.push(Token { kind: TokenKind::Star, value: "*".to_string() }),
+                    '/' => tokens.push(Token { kind: TokenKind::Slash, value: "/".to_string() }),
+                    '=' => tokens.push(Token { kind: TokenKind::Eq, value: "=".to_string() }),
+                    '(' => tokens.push(Token { kind: TokenKind::LParen, value: "(".to_string() }),
+                    ')' => tokens.push(Token { kind: TokenKind::RParen, value: ")".to_string() }),
+                    '{' => tokens.push(Token { kind: TokenKind::LBrace, value: "{".to_string() }),
+                    '}' => tokens.push(Token { kind: TokenKind::RBrace, value: "}".to_string() }),
+                    ',' => tokens.push(Token { kind: TokenKind::Comma, value: ",".to_string() }),
+                    ';' => tokens.push(Token { kind: TokenKind::Semicolon, value: ";".to_string() }),
+                    _ => panic!("Unexpected character '{}'", ch),
                 }
             }
         }
 
+        tokens.push(Token { kind: TokenKind::EOF, value: "".to_string() });
         tokens
+    }
+
+    fn lex_ident_or_keyword(&mut self) -> Token {
+        let mut ident = String::new();
+
+        while let Some(ch) = self.peek() {
+            if ch.is_alphanumeric() || ch == '_' {
+                ident.push(ch);
+                self.pos += 1;
+            } else {
+                break;
+            }
+        }
+
+        let kind = match ident.as_str() {
+            "let" => TokenKind::Let,
+            "if" => TokenKind::If,
+            "else" => TokenKind::Else,
+            "while" => TokenKind::While,
+            "fn" => TokenKind::Fn,
+            "return" => TokenKind::Return,
+            _ => TokenKind::Ident,
+        };
+
+        Token { kind, value: ident }
+    }
+
+    fn lex_number(&mut self) -> Token {
+        let mut num = String::new();
+        while let Some(ch) = self.peek() {
+            if ch.is_ascii_digit() {
+                num.push(ch);
+                self.pos += 1;
+            } else {
+                break;
+            }
+        }
+        Token { kind: TokenKind::Number, value: num }
     }
 }
