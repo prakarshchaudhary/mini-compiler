@@ -1,74 +1,79 @@
 # Mini Compiler
 
-A simple **mini compiler** that demonstrates the core concepts of compiling, from **lexical analysis** to **code generation**. This project is designed as a learning tool to understand how programming languages are parsed, compiled, and executed.
+A **mini compiler** project written in Rust that demonstrates the core stages of compilation: **lexical analysis, parsing, semantic analysis, optimization, and code generation**. This project is designed for learning and experimentation with compiler design concepts.
 
 ---
 
 ## Table of Contents
 1. [Introduction](#introduction)  
 2. [Features](#features)  
-3. [Architecture & Design](#architecture--design)  
+3. [Project Structure](#project-structure)  
 4. [Technical Details](#technical-details)  
 5. [Installation](#installation)  
-6. [Usage](#usage)  
-7. [Examples](#examples)  
-8. [Limitations](#limitations)  
-9. [Future Improvements](#future-improvements)  
-10. [Contributing](#contributing)  
-11. [License](#license)  
 
 ---
 
 ## Introduction
-This mini compiler is an **educational project** to illustrate the compilation process. It supports:
+This mini compiler implements a **basic compilation pipeline** in Rust:
 
-- Lexical analysis  
-- Parsing expressions and statements  
-- Semantic analysis (basic type checking)  
-- Intermediate code generation  
-- Optional simple target code generation (e.g., assembly or virtual machine instructions)  
+- Tokenizes source code using a **lexer**  
+- Builds an **Abstract Syntax Tree (AST)** with a **parser**  
+- Performs **semantic analysis** for type checking and symbol validation  
+- Applies **optimizations** on the intermediate representation  
+- Generates **bytecode** or **LLVM IR** as output  
 
-It helps learners understand **how a programming language is converted from source code to executable instructions**.
+It is intended for educational purposes and as a base for experimenting with compiler techniques.
 
 ---
 
 ## Features
-- **Lexer (Tokenizer):** Converts raw source code into tokens.  
-- **Parser:** Builds an **Abstract Syntax Tree (AST)** from tokens.  
-- **Semantic Analyzer:** Performs **basic type checking** and symbol table management.  
-- **Intermediate Code Generation:** Generates pseudo-code or intermediate instructions.  
-- **Optional Target Code Generation:** Can generate code for a small VM or simulate assembly instructions.  
-- **Error Handling:** Reports **lexical, syntactical, and semantic errors** with line numbers.  
+- **Lexer:** Converts source code into tokens (`lexer.rs`)  
+- **Parser:** Builds an AST from tokens (`parser.rs`)  
+- **Semantic Analyzer:** Checks types, variable declarations, and scope (`semantic.rs`)  
+- **Optimizer:** Performs simple code optimizations (`optimiser.rs`)  
+- **Code Generation:**  
+  - Bytecode generation for a virtual machine (`codegen_bytecode.rs`)  
+  - LLVM IR generation for further compilation (`codegen_llvm.rs`)  
+- **Utilities:** Shared functions and helpers (`utils.rs`)  
+- **Entry Point:** Orchestrates compilation stages (`main.rs`)  
 
 ---
 
-## Architecture & Design
-The mini compiler follows a **classic compiler pipeline**:
+## Project Structure
 
-1. **Lexical Analysis (Lexer)**  
-   - Input: Source code string  
-   - Output: List of tokens (identifiers, keywords, operators, literals)  
-
-2. **Parsing (Parser)**  
-   - Input: Token list  
-   - Output: Abstract Syntax Tree (AST)  
-   - Uses **recursive descent parsing** (or other parser)  
-
-3. **Semantic Analysis**  
-   - Input: AST  
-   - Checks types, variable declarations, and scoping rules  
-   - Maintains a **symbol table**  
-
-4. **Intermediate Code Generation**  
-   - Converts AST into **3-address code** or **VM instructions**  
-   - Handles **expressions, assignments, loops, and conditions**  
-
-5. **Optional Target Code Generation**  
-   - Converts intermediate code to executable instructions or a simulated VM code  
-
-6. **Error Reporting**  
-   - Lexical errors: invalid characters  
-   - Syntax errors: invalid grammar  
-   - Semantic errors: undeclared variables, type mismatch  
+| File | Description |
+|------|-------------|
+| `main.rs` | Entry point; reads source files, runs lexer, parser, semantic, optimizer, and code generation stages. |
+| `lexer.rs` | Tokenizes the input source code into a stream of tokens. |
+| `parser.rs` | Builds the AST using a **recursive descent parser**. |
+| `ast.rs` | Defines **AST node structures** for expressions, statements, and program constructs. |
+| `semantic.rs` | Performs **semantic analysis**: symbol table management, type checking, and validation. |
+| `optimiser.rs` | Applies **optimizations** to the AST or intermediate representation. |
+| `codegen_bytecode.rs` | Converts the intermediate representation into **bytecode** for a simple VM. |
+| `codegen_llvm.rs` | Converts AST or IR into **LLVM IR** for compilation to machine code. |
+| `utils.rs` | Helper functions shared across modules (error handling, token utilities, etc.). |
 
 ---
+
+## Technical Details
+- **Language:** Rust  
+- **Parser Type:** Recursive Descent  
+- **AST Representation:** Structs representing expressions, statements, literals, identifiers, and program nodes  
+- **Symbol Table:** Maintains variable names, types, and scope levels using Rust `HashMap`s  
+- **Error Handling:**  
+  - Lexer: Invalid characters  
+  - Parser: Syntax errors with line/column info  
+  - Semantic: Undeclared variables, type mismatches  
+- **Intermediate Representations:**  
+  - Bytecode instructions for a simple stack-based VM  
+  - LLVM IR instructions for further compilation or optimization  
+- **Optimizations:** Constant folding, dead code elimination (basic)  
+
+---
+
+## Installation
+Clone the repository:
+
+```bash
+git clone https://github.com/your-username/mini-compiler.git
+cd mini-compiler
